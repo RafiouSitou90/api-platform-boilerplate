@@ -6,6 +6,10 @@ MAINTAINER Rafiou Sitou <rafiousitou90@gmail.com>
 
 ARG WORKDIR=/var/www/app
 
+WORKDIR ${WORKDIR}
+
+RUN rm -rf /var/www/html
+
 RUN apk --no-cache update && apk --no-cache add \
     bash \
     autoconf \
@@ -20,6 +24,13 @@ RUN apk --no-cache update && apk --no-cache add \
     zlib-dev \
     icu \
     git
+
+RUN set -eux; \
+	addgroup -g 1000 -S 1000; \
+	adduser -u 1000 -D -S -G 1000 1000
+
+RUN mkdir -p /var/www
+RUN chown -R 1000:1000 /var/www
 
 # Install MySQL
 RUN docker-php-ext-install mysqli pdo pdo_mysql \
@@ -86,8 +97,6 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
 RUN curl -sS https://get.symfony.com/cli/installer | bash \
    && mv /root/.symfony/bin/symfony /usr/local/bin/symfony
 
-RUN rm -rf /var/www/html
-
 # prevent the reinstallation of vendors at every changes in the source code
 COPY composer.json composer.lock symfony.lock ./
 RUN set -eux; \
@@ -98,9 +107,8 @@ RUN set -eux \
 	&& mkdir -p var/cache var/log \
 	&& composer dump-autoload --classmap-authoritative
 
-WORKDIR ${WORKDIR}
-
-#VOLUME ${WORKDIR}/var
+USER 1000
+RUN mkdir /var/www/.composer
 
 #COPY .docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
 #RUN chmod +x /usr/local/bin/docker-entrypoint

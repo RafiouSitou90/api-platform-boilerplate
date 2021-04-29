@@ -23,12 +23,11 @@ services:
         environment:
             APP_ENV: dev
             APP_DEBUG: 1
-            PHP_DATE_TIMEZONE: ${PHP_DATE_TIMEZONE:-UTC}
+#            PHP_DATE_TIMEZONE: ${PHP_DATE_TIMEZONE:-UTC}
             XDEBUG_CONFIG: remote_host=host.docker.internal
             PHP_IDE_CONFIG: serverName=localhost
         volumes:
             - ./:/var/www/app:rw,cached
-#            - var:/var/www/app/var
         networks:
             - dev
 
