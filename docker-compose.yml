@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+    mysql:
+        image: mysql:5.7
+        container_name: container_mysql
+        restart: always
+        ports:
+            - "3306:3306"
+        volumes:
+            - db-data:/var/lib/mysql
+        environment:
+            MYSQL_USER: symfony
+            MYSQL_PASSWORD: secret
+            MYSQL_ROOT_PASSWORD: secret
+        networks:
+            - dev
+
+    php:
+        build: .
+        container_name: container_php
+        restart: always
+        environment:
+            APP_ENV: dev
+            APP_DEBUG: 1
+            PHP_DATE_TIMEZONE: ${PHP_DATE_TIMEZONE:-UTC}
+            XDEBUG_CONFIG: remote_host=host.docker.internal
+            PHP_IDE_CONFIG: serverName=localhost
+        volumes:
+            - ./:/var/www/app:rw,cached
+#            - var:/var/www/app/var
+        networks:
+            - dev
+
+    nginx:
+        build: ./.docker/nginx
+        container_name: container_nginx
+        ports:
+            - "8080:80"
+        volumes:
+            - ./:/var/www/app
+        depends_on:
+            - php
+        networks:
+            - dev
+
+networks:
+    dev:
+
+volumes:
+    db-data:
+    var:

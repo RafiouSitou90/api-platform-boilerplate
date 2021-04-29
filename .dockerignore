@@ -1,0 +1,5 @@
+/.git/
+/.idea/
+/docker/
+docker-compose.yml
+Makefile
