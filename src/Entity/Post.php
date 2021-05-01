@@ -4,13 +4,31 @@ namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiResource;
 use App\Repository\PostRepository;
+use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=PostRepository::class)
  */
-#[ApiResource]
+#[ApiResource(
+    itemOperations: [
+        'put',
+        'delete',
+        'get' => [
+            'normalization_context' => [
+                'groups' => [
+                    'read:Posts:collection',
+                    'read:Posts:item',
+                    'read:Posts:Category',
+                ]
+            ]
+        ]
+    ],
+    denormalizationContext: ['groups' => ['write:Posts:Post']],
+    normalizationContext: ['groups' => ['read:Posts:collection']],
+)]
 class Post
 {
     /**
@@ -18,26 +36,31 @@ class Post
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      */
+    #[Groups(['read:Posts:collection'])]
     private int $id;
 
     /**
      * @ORM\Column(type="string", length=255)
      */
+    #[Groups(['read:Posts:collection', 'write:Posts:Post'])]
     private string $title;
 
     /**
      * @ORM\Column(type="string", length=255)
      */
+    #[Groups(['read:Posts:collection', 'write:Posts:Post'])]
     private string $slug;
 
     /**
      * @ORM\Column(type="text")
      */
+    #[Groups(['read:Posts:item', 'write:Posts:Post'])]
     private string $content;
 
     /**
      * @ORM\Column(type="datetime")
      */
+    #[Groups(['read:Posts:item'])]
     private DateTimeInterface $createdAt;
 
     /**
@@ -48,7 +71,14 @@ class Post
     /**
      * @ORM\ManyToOne(targetEntity=Category::class, inversedBy="posts")
      */
+    #[Groups(['read:Posts:item', 'write:Posts:Post'])]
     private Category $category;
+
+    public function __construct()
+    {
+        $this->createdAt = new DateTime();
+        $this->updatedAt = new DateTime();
+    }
 
     public function getId(): ?int
     {
@@ -120,7 +150,7 @@ class Post
         return $this->category;
     }
 
-    public function setCategory(?Category $category): self
+    public function setCategory(Category $category): self
     {
         $this->category = $category;
 
