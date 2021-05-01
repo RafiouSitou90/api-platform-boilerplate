@@ -94,6 +94,11 @@ class Post
     ]
     private Category $category;
 
+    /**
+     * @ORM\Column(type="boolean", options={"default": "0"})
+     */
+    private bool $online = false;
+
     public function __construct()
     {
         $this->createdAt = new DateTime();
@@ -183,5 +188,17 @@ class Post
     public static function validationGroups(self $post): array
     {
         return ['create:Posts:post'];
+    }
+
+    public function getOnline(): ?bool
+    {
+        return $this->online;
+    }
+
+    public function setOnline(bool $online): self
+    {
+        $this->online = $online;
+
+        return $this;
     }
 }
