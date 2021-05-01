@@ -3,8 +3,10 @@
 namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiFilter;
+use ApiPlatform\Core\Annotation\ApiProperty;
 use ApiPlatform\Core\Annotation\ApiResource;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
+use App\Controller\PostPublishController;
 use App\Repository\PostRepository;
 use DateTime;
 use DateTimeInterface;
@@ -31,12 +33,31 @@ use Symfony\Component\Validator\Constraints\Valid;
                     'read:Posts:collection',
                     'read:Posts:item',
                     'read:Posts:Category',
-                ]
+                ],
+                'openapi_definition_name' => 'Details',
             ]
-        ]
+        ],
+        'publish' => [
+            'method' => 'POST',
+            'path' => '/posts/{id}/publish',
+            'controller' => PostPublishController::class,
+            'openapi_context' => [
+                'summary' => 'Use to publish an article',
+                'requestBody' => [
+                    'content' => [
+                        'application/json' => [
+                            'schema' => [],
+                        ]
+                    ]
+                ],
+            ],
+        ],
     ],
         denormalizationContext: ['groups' => ['write:Posts:Post']],
-        normalizationContext: ['groups' => ['read:Posts:collection']],
+        normalizationContext: [
+            'groups' => ['read:Posts:collection'],
+            'openapi_definition_name' => 'Collection'
+        ],
         paginationClientItemsPerPage: true,
         paginationItemsPerPage: 2,
         paginationMaximumItemsPerPage: 2
@@ -97,6 +118,10 @@ class Post
     /**
      * @ORM\Column(type="boolean", options={"default": "0"})
      */
+    #[
+        Groups(['read:Posts:collection']),
+        ApiProperty(openapiContext: ['type' => 'boolean', 'description' => 'Online?'])
+    ]
     private bool $online = false;
 
     public function __construct()
