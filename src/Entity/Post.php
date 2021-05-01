@@ -8,11 +8,17 @@ use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\Valid;
 
 /**
  * @ORM\Entity(repositoryClass=PostRepository::class)
  */
 #[ApiResource(
+    collectionOperations: [
+        'get',
+        'post'
+    ],
     itemOperations: [
         'put',
         'delete',
@@ -27,7 +33,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
         ]
     ],
     denormalizationContext: ['groups' => ['write:Posts:Post']],
-    normalizationContext: ['groups' => ['read:Posts:collection']],
+    normalizationContext: ['groups' => ['read:Posts:collection']]
 )]
 class Post
 {
@@ -42,7 +48,10 @@ class Post
     /**
      * @ORM\Column(type="string", length=255)
      */
-    #[Groups(['read:Posts:collection', 'write:Posts:Post'])]
+    #[
+        Groups(['read:Posts:collection', 'write:Posts:Post']),
+        Length(min: 5, groups: ['create:Posts:post'])
+    ]
     private string $title;
 
     /**
@@ -69,9 +78,12 @@ class Post
     private DateTimeInterface $updatedAt;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Category::class, inversedBy="posts")
+     * @ORM\ManyToOne(targetEntity=Category::class, inversedBy="posts", cascade="persist")
      */
-    #[Groups(['read:Posts:item', 'write:Posts:Post'])]
+    #[
+        Groups(['read:Posts:item', 'write:Posts:Post']),
+        Valid
+    ]
     private Category $category;
 
     public function __construct()
@@ -155,5 +167,13 @@ class Post
         $this->category = $category;
 
         return $this;
+    }
+
+    /**
+     * @return string[]
+     */
+    public static function validationGroups(self $post): array
+    {
+        return ['create:Posts:post'];
     }
 }

@@ -9,6 +9,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use JetBrains\PhpStorm\Pure;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints\Length;
 
 /**
  * @ORM\Entity(repositoryClass=CategoryRepository::class)
@@ -27,7 +28,10 @@ class Category
     /**
      * @ORM\Column(type="string", length=255)
      */
-    #[Groups(['read:Posts:Category'])]
+    #[
+        Groups(['read:Posts:Category', 'write:Posts:Post']),
+        Length(min: 3)
+    ]
     private string $name;
 
     /**
