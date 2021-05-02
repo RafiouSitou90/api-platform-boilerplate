@@ -3,8 +3,11 @@
 namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiFilter;
+use ApiPlatform\Core\Annotation\ApiProperty;
 use ApiPlatform\Core\Annotation\ApiResource;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
+use App\Controller\PostCountController;
+use App\Controller\PostPublishController;
 use App\Repository\PostRepository;
 use DateTime;
 use DateTimeInterface;
@@ -20,7 +23,43 @@ use Symfony\Component\Validator\Constraints\Valid;
     ApiResource(
         collectionOperations: [
         'get',
-        'post'
+        'post',
+        'count' => [
+            'method' => 'GET',
+            'path' => '/posts/count',
+            'controller' => PostCountController::class,
+            'read' => false,
+            'pagination_enabled' => false,
+            'filters' => [],
+            'openapi_context' => [
+                'summary' => 'Retrieve the total number of articles',
+                'parameters' => [
+                    [
+                        'in' => 'query',
+                        'name' => 'online',
+                        'schema' => [
+                            'type' => 'integer',
+                            'maximum' => 1,
+                            'minimum' => 0,
+                        ],
+                        'description' => 'Filter articles online'
+                    ],
+                ],
+                'responses' => [
+                    '200' => [
+                        'description' => 'Total number of items',
+                        'content' => [
+                            'application/json' => [
+                                'schema' => [
+                                    'type' => 'integer',
+                                    'example' => 10,
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
     ],
         itemOperations: [
         'put',
@@ -31,12 +70,31 @@ use Symfony\Component\Validator\Constraints\Valid;
                     'read:Posts:collection',
                     'read:Posts:item',
                     'read:Posts:Category',
-                ]
+                ],
+                'openapi_definition_name' => 'Details',
             ]
-        ]
+        ],
+        'publish' => [
+            'method' => 'POST',
+            'path' => '/posts/{id}/publish',
+            'controller' => PostPublishController::class,
+            'openapi_context' => [
+                'summary' => 'Use to publish an article',
+                'requestBody' => [
+                    'content' => [
+                        'application/json' => [
+                            'schema' => [],
+                        ]
+                    ]
+                ],
+            ],
+        ],
     ],
         denormalizationContext: ['groups' => ['write:Posts:Post']],
-        normalizationContext: ['groups' => ['read:Posts:collection']],
+        normalizationContext: [
+            'groups' => ['read:Posts:collection'],
+            'openapi_definition_name' => 'Collection'
+        ],
         paginationClientItemsPerPage: true,
         paginationItemsPerPage: 2,
         paginationMaximumItemsPerPage: 2
@@ -93,6 +151,15 @@ class Post
         Valid
     ]
     private Category $category;
+
+    /**
+     * @ORM\Column(type="boolean", options={"default": "0"})
+     */
+    #[
+        Groups(['read:Posts:collection']),
+        ApiProperty(openapiContext: ['type' => 'boolean', 'description' => 'Online?'])
+    ]
+    private bool $online = false;
 
     public function __construct()
     {
@@ -183,5 +250,17 @@ class Post
     public static function validationGroups(self $post): array
     {
         return ['create:Posts:post'];
+    }
+
+    public function getOnline(): ?bool
+    {
+        return $this->online;
+    }
+
+    public function setOnline(bool $online): self
+    {
+        $this->online = $online;
+
+        return $this;
     }
 }
