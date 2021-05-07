@@ -10,7 +10,7 @@ if [ "$1" = 'php-fpm' ] || [ "$1" = 'bin/console' ]; then
     bin/console assets:install --no-interaction
 
 	until bin/console doctrine:query:sql "select 1" >/dev/null 2>&1; do
-	    (>&2 echo "Waiting for MySQL to be ready...")
+	    (>&2 echo "Waiting for PostgreSql to be ready...")
 		sleep 1
 	done
 fi
