@@ -1,8 +1,9 @@
 ARG PHP_VERSION=8.0
+ARG NGINX_VERSION=1.19
 
-FROM php:${PHP_VERSION}-fpm-alpine AS symfony_php
+FROM php:${PHP_VERSION}-fpm-alpine AS sf5_php
 
-MAINTAINER Rafiou Sitou <rafiousitou90@gmail.com>
+LABEL maintainer="rafiousitou90@gmail.com"
 
 ARG WORKDIR=/var/www/app
 
@@ -79,6 +80,11 @@ RUN apk add --no-cache \
     && apk del pcre-dev ${PHPIZE_DEPS} \
     && rm -rf /tmp/pear
 
+# Install NodeJS, Yarn
+RUN apk add --no-cache \
+    nodejs yarn npm \
+    && rm -rf /tmp/pear
+
 # Add xdebug.ini, php.ini, and php-cli.ini files
 COPY .docker/php/dev/php.ini $PHP_INI_DIR/conf.d/php.ini
 COPY .docker/php/dev/php-cli.ini $PHP_INI_DIR/conf.d/php-cli.ini
@@ -97,7 +103,7 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
 RUN curl -sS https://get.symfony.com/cli/installer | bash \
    && mv /root/.symfony/bin/symfony /usr/local/bin/symfony
 
-# prevent the reinstallation of vendors at every changes in the source code
+# Prevent the reinstallation of vendors at every changes in the source code
 COPY composer.json composer.lock symfony.lock ./
 RUN set -eux; \
 	composer install --prefer-dist --no-autoloader --no-scripts  --no-progress --no-suggest; \
@@ -107,11 +113,22 @@ RUN set -eux \
 	&& mkdir -p var/cache var/log \
 	&& composer dump-autoload --classmap-authoritative
 
+COPY .docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+RUN chmod +x /usr/local/bin/docker-entrypoint
+
 USER 1000
 RUN mkdir /var/www/.composer
 
-#COPY .docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
-#RUN chmod +x /usr/local/bin/docker-entrypoint
-#
-#ENTRYPOINT ["docker-entrypoint"]
-#CMD ["php-fpm"]
+ENTRYPOINT ["docker-entrypoint"]
+CMD ["php-fpm"]
+
+
+FROM nginx:${NGINX_VERSION}-alpine AS sf5_nginx
+
+ARG WORKDIR=/var/www/app
+
+RUN rm -rf /etc/nginx/conf.d/default.conf
+
+COPY .docker/nginx/conf.d/default.conf /etc/nginx/conf.d/
+
+WORKDIR ${WORKDIR}
