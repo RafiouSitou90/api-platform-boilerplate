@@ -20,6 +20,11 @@ rebuild:
 container-php:
 	$(DE) -it container_php bash
 
+## —— cache ———————————————————————————————————————————————————————————————
+cache: ## Reset the database
+	$(SYMFONY_CONSOLE) cache:clear
+	$(SYMFONY_CONSOLE) cache:warmup
+
 ## —— database ———————————————————————————————————————————————————————————————
 clean-db: ## Reset the database
 	$(SYMFONY_CONSOLE) doctrine:database:drop --if-exists --force

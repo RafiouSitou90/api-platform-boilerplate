@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Core\Action\NotFoundAction;
 use ApiPlatform\Core\Annotation\ApiResource;
 use App\Repository\CategoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -14,7 +15,22 @@ use Symfony\Component\Validator\Constraints\Length;
 /**
  * @ORM\Entity(repositoryClass=CategoryRepository::class)
  */
-#[ApiResource]
+#[ApiResource(
+    collectionOperations: ['get', 'post'],
+    itemOperations: [
+        'delete',
+        'put',
+        'patch',
+        'get' => [
+            'controller' => NotFoundAction::class,
+            'read' => false,
+            'output' => false,
+            'openapi_context' => [
+                'summary' => 'hidden',
+            ],
+        ],
+    ]
+)]
 class Category
 {
     /**
